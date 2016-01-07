@@ -19,12 +19,12 @@ typedef std::vector<std::string> VS;
 typedef typename M_SV_S::const_iterator CMiter;
 typedef typename M_SV_S::iterator Miter;
 
-void saveOne( CMiter iter,const std::string& savepath);
+void saveOne(const CMiter& iter,const std::string& savepath);
 
 void saveAll(const M_SV_S &, const std::string& savepath);
 
-M_SV_S readFrameForPlist(VS plistFiles);
+M_SV_S readFrameForPlist(const VS &plistFiles);
 
-VS readPlistFrame(const std::string & plist);
+VS readPlistFrame(const std::string &plist);
 
 #endif /* defined(__restorepic__RestoreTexture__) */

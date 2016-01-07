@@ -1,6 +1,5 @@
 #include "HelloWorldScene.h"
-#include "FileHelper.h"
-#include "RestoreTexture.h"
+#include "saveui.h"
 
 USING_NS_CC;
 
@@ -50,29 +49,8 @@ bool HelloWorld::init()
     menu->setPosition(Vec2::ZERO);
     this->addChild(menu, 1);
 
-    /////////////////////////////
-    // 3. add your codes below...
-
-    // add a label shows "Hello World"
-    // create and initialize a label
     
-    auto label = Label::createWithTTF("Hello World", "fonts/Marker Felt.ttf", 24);
-    
-    // position the label on the center of the screen
-    label->setPosition(Vec2(origin.x + visibleSize.width/2,
-                            origin.y + visibleSize.height - label->getContentSize().height));
-
-    // add the label as a child to this layer
-    this->addChild(label, 1);
-
-    // add "HelloWorld" splash screen"
-    auto sprite = Sprite::create("HelloWorld.png");
-
-    // position the sprite on the center of the screen
-    sprite->setPosition(Vec2(visibleSize.width/2 + origin.x, visibleSize.height/2 + origin.y));
-
-    // add the sprite as a child to this layer
-    this->addChild(sprite, 0);
+//    this->addChild(SaveUi::create());
     
     auto listener = EventListenerKeyboard::create();
     listener->onKeyPressed = [&](EventKeyboard::KeyCode key, Event*){
@@ -81,16 +59,6 @@ bool HelloWorld::init()
         }
     };
     getEventDispatcher()->addEventListenerWithFixedPriority(listener, 1);
-    
-    auto file = FileUtils::getInstance()->fullPathForFilename("HelloWorld.png");
-    
-    auto t = file.substr(0,file.find_last_of('/') + 1);
-    
-    auto files = getFiles(t,"plist");
-    
-    auto frames = readFrameForPlist(files);
-    
-    saveAll(frames,FileUtils::getInstance()->getWritablePath());
     
     return true;
 }

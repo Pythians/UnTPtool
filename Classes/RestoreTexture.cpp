@@ -12,7 +12,7 @@ USING_NS_CC;
 
 static char x = '/';
 
-M_SV_S readFrameForPlist(VS plistFiles)
+M_SV_S readFrameForPlist(const VS &plistFiles)
 {
     M_SV_S frames;
     for ( auto plist : plistFiles)
@@ -49,7 +49,7 @@ VS readPlistFrame(const std::string & plist)
     return frames;
 }
 
-void saveOne( CMiter iter, const std::string& savepath)
+void saveOne(const CMiter& iter, const std::string& savepath)
 {
     auto plist = iter->first;
     VS frames = iter->second;
@@ -71,6 +71,10 @@ void saveOne( CMiter iter, const std::string& savepath)
         sp->setSpriteFrame(frame);
         sp->setAnchorPoint(Vec2::ANCHOR_TOP_LEFT);
         auto size = sp->getContentSize();
+        if (size.width < 1)
+            size.width = 1;
+        if (size.height < 1)
+            size.height = 1;
         sp->setPositionY(size.height);
 
         auto render = RenderTexture::create(size.width, size.height);
