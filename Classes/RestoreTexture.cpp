@@ -36,7 +36,6 @@ VS readPlistFrame(const std::string & plist)
 {
     VS frames;
     auto dictionary = FileUtils::getInstance()->getValueMapFromFile(plist);
-//    auto dictionary = FileUtils::getInstance()->getValueMapFromFile( "res/abc/role/" + plist);
     if (dictionary.size())
     {
         ValueMap& framesDict = dictionary["frames"].asValueMap();
@@ -89,25 +88,27 @@ void saveOne(const CMiter& iter, const std::string& savepath)
     cache->removeSpriteFramesFromFile(plist);
 }
 
-void save()
+void saveOne(const std::string& frame,const std::string& savepath)
 {
-
+    auto path = savepath + frame;
+    path = path.substr(0, path.find_last_of(x));
+    FileUtils::getInstance()->createDirectory(path);
     
-    auto sp=Sprite::createWithSpriteFrameName("1_00001.png");
-    auto size=sp->getContentSize();
+    auto sp = Sprite::createWithSpriteFrameName(frame);
     sp->setAnchorPoint(Vec2::ANCHOR_TOP_LEFT);
+    auto size = sp->getContentSize();
+    if (size.width < 1)
+        size.width = 1;
+    if (size.height < 1)
+        size.height = 1;
     sp->setPositionY(size.height);
     
-    RenderTexture *render = RenderTexture::create(size.width,size.height,Texture2D::PixelFormat::RGBA8888);
-    render->beginWithClear(0.0f, 0.0f, 0.0f, 0.0f);
-    
+    auto render = RenderTexture::create(size.width, size.height);
+    render->beginWithClear(0.0, 0.0, 0.0, 0.0);
     sp->visit();
-    
     render->end();
     Director::getInstance()->getRenderer()->render();
     
-    auto _image=render->newImage();
-    std::string wPath=FileUtils::getInstance()->getWritablePath();
-    _image->saveToFile(wPath+"a.png",false);
-    CCLOG("Path====>%s",wPath.c_str());
+    auto img = render->newImage();
+    img->saveToFile(savepath + frame,false);
 }

@@ -9,32 +9,35 @@
 #ifndef __restorepic__saveui__
 #define __restorepic__saveui__
 
-#include <stdio.h>
-#include <future>
-#include <thread>
 #include "cocos2d.h"
+#include "RestoreTexture.h"
 
 
 class SaveUi : public cocos2d::Node {
 private:
-    cocos2d::ProgressTimer * saveProgress;
+    
+    cocos2d::MenuItem * _item;
 
-    cocos2d::Label * stat;
-    cocos2d::Label * plist;
-    cocos2d::Label * pic;
-    cocos2d::Label * num;
-    
-    int progress;
-    
-    std::promise<std::string> _promise;
-    std::future<std::string> _futurn;
-    
+    cocos2d::Label * _stat;
+    cocos2d::Label * _plist;
+    cocos2d::Label * _pic;
+    cocos2d::Label * _num;
+
+    int _count;
+    bool _isLoad;
+    bool _isBegain;
+
+    std::string _rootPath;
+    std::string _savePath;
+    M_SV_S _allFrames;
 public:
     bool init();
+    bool init(const std::string& path);
     
     void update(float delta);
-    void callback (Ref * ref);
-    
+    void onEnter();
+        
+    static SaveUi * create(const std::string&);
     CREATE_FUNC(SaveUi);
 };
 

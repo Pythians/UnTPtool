@@ -7,48 +7,35 @@
 //
 
 
-#include <thread>
-#include <chrono>
-#include <future>
-
 #include "saveui.h"
 #include "FileHelper.h"
-#include "RestoreTexture.h"
 
 USING_NS_CC;
 
-static int Allplist = 0;
-static const int ResSize = 10;
-
-struct ItemResposity
+SaveUi * SaveUi::create(const std::string & writePath)
 {
-    std::string item_buff[ResSize];
-    int read_position;
-    int write_position;
-    std::mutex mtx;
-    std::condition_variable repo_not_full;
-    std::condition_variable repo_not_empty;
-} GItemRepository;
-
-void produceItem(ItemResposity * it, std::string str)
-{
-    std::unique_lock<std::mutex> lock(it->mtx);
-    while ((it->write_position + 1) % ResSize == it->read_position)
+    auto ref = new SaveUi();
+    if (ref && ref->init(writePath))
     {
-        it->repo_not_full.wait(lock);
+        ref->autorelease();
     }
+    return ref;
 }
 
-void setString(std::promise<std::string>& promise)
+bool SaveUi::init(const std::string &path)
 {
-    for (int i = 0; i < 10; ++i)
+    if (!this->init())
     {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        char s[50];
-        sprintf(s, "%s %d", "sub thread : ", i);
-        log("xjoasfa;iojf");
+        return false;
     }
-    promise.set_value("SDF");
+    
+    _rootPath = path;
+    if (_rootPath.at(_rootPath.size() - 1) != '/')
+    {
+        _rootPath += '/';
+    }
+    
+    return true;
 }
 
 bool SaveUi::init()
@@ -57,57 +44,104 @@ bool SaveUi::init()
     {
         return false;
     }
-    
+    _count = 0;
+    _isLoad = false;
+    _isBegain = false;
     auto size = Director::getInstance()->getWinSize();
     
     addChild(LayerColor::create(Color4B::GRAY));
     
-    stat = Label::createWithTTF("source", "fonts/arial.ttf", 64);
-    stat->setPosition(size.width / 2 , size.height / 2 + stat->getContentSize().height);
-    addChild(stat);
+    _stat = Label::createWithTTF("seach over", "fonts/arial.ttf", 24);
+    _stat->setPosition(size.width / 2 , size.height * 3 / 4);
+    _stat->setColor(Color3B::GREEN);
+    addChild(_stat);
     
+    _plist = Label::createWithTTF("A", "fonts/arial.ttf", 32);
+    _plist->setAnchorPoint(Vec2::ANCHOR_TOP_LEFT);
+    _plist->setPosition(size.width / 5, size.height / 2);
+    _plist->setColor(Color3B::ORANGE);
+    addChild(_plist);
+    
+    _num = Label::createWithTTF("A", "fonts/arial.ttf", 32);
+    _num->setAnchorPoint(Vec2::ANCHOR_TOP_LEFT);
+    _num->setPosition(size.width / 5, size.height / 2 - _plist->getContentSize().height);
+    _num->setColor(Color3B::ORANGE);
+    addChild(_num);
+    
+    FileUtils::getInstance()->addSearchPath("res/");
     auto file = FileUtils::getInstance()->fullPathForFilename("HelloWorld.png");
     
-    auto t = file.substr(0,file.find_last_of('/') + 1);
+    _rootPath = file.substr(0,file.find_last_of('/') + 1);
     
-    auto files = getFiles(t,"plist");
-    Allplist = files.size();
+    scheduleUpdate();
     
-//    auto frames = readFrameForPlist(files);
+    _item = MenuItemFont::create("Start");
+    _item->setCallback([&](Ref* s){
+        _isBegain = !_isBegain;
+        _item->setEnabled(false);
+    });
+    _item->setPosition(size.width * 3 / 4, size.height / 2);
+    _item->setColor(Color3B::MAGENTA);
     
-    //    saveAll(frames,FileUtils::getInstance()->getWritablePath());
+    auto menu = Menu::create(_item, nullptr);
+    menu->setPosition(Vec2::ZERO);
+    addChild(menu);
     
-    
-//    auto sp = Sprite::create("res/sliderTrack.png");
-//    sp->setPosition(size/2);
-//    addChild(sp);
-//    
-//    auto pp = Sprite::create("res/sliderProgress.png");
-//    
-//    saveProgress = ProgressTimer::create(pp);
-//    saveProgress->setPosition(size / 2);
-//    saveProgress->setBarChangeRate(Vec2::UNIT_X);
-//    saveProgress->setType(ProgressTimer::Type::BAR);
-//    saveProgress->setMidpoint(Vec2::ZERO);
-//    saveProgress->setPercentage(0.0f);
-//    addChild(saveProgress);
-//    
-//    schedule([&](float t)->void{
-//        ++progress;
-//        log("%d",progress);
-//        saveProgress->setPercentage(progress / 100);
-//    }, 1.0f, 10, 0.0f,"key");
-    
-
     return true;
 }
 
+
 void SaveUi::update(float delta)
 {
+    if (_isBegain)
+    {
+        if (_allFrames.empty())
+        {
+            _stat->setString("Save All Done");
+            _item->setEnabled(true);
+            _isBegain = false;
+        }
+        else
+        {
+            auto p = _allFrames.begin();
+            auto plist = p->first;
+            auto& frame = p->second;
+            if (!_isLoad)
+            {
+                _isLoad = true;
+                char buf [32];
+                sprintf(buf, "save %luth plist",_count + 1 - _allFrames.size());
+                _num->setString(buf);
+                SpriteFrameCache::getInstance()->addSpriteFramesWithFile(plist);
+                _savePath = _rootPath + "savePic/" + plist.substr(0,plist.find_last_of('.')) + '/';
+            }
+            if (frame.empty())
+            {
+                SpriteFrameCache::getInstance()->removeSpriteFramesFromFile(plist);
+                _allFrames.erase(p);
+                _isLoad=false;
+            }
+            else
+            {
+                auto pic = frame.at(frame.size()-1);
+                _stat->setString("Save pic: " + pic);
+                saveOne(pic, _savePath);
+                frame.pop_back();
+            }
+        }
+    }
     Node::update(delta);
 }
 
-void SaveUi::callback(cocos2d::Ref *ref)
+void SaveUi::onEnter()
 {
-    
+    Node::onEnter();
+    auto files = getFiles(_rootPath + "res/","plist");
+    _allFrames = readFrameForPlist(files);
+    _count = files.size();
+    char buf[32];
+    sprintf(buf, "Find %d plist", _count);
+    _plist->setString(buf);
+    sprintf(buf, "save %d plist", 0);
+    _num->setString(buf);
 }

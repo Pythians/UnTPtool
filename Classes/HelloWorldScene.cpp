@@ -50,7 +50,7 @@ bool HelloWorld::init()
     this->addChild(menu, 1);
 
     
-//    this->addChild(SaveUi::create());
+    this->addChild(SaveUi::create());
     
     auto listener = EventListenerKeyboard::create();
     listener->onKeyPressed = [&](EventKeyboard::KeyCode key, Event*){

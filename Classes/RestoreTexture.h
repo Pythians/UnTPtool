@@ -20,6 +20,7 @@ typedef typename M_SV_S::const_iterator CMiter;
 typedef typename M_SV_S::iterator Miter;
 
 void saveOne(const CMiter& iter,const std::string& savepath);
+void saveOne(const std::string& frame,const std::string& savepath);
 
 void saveAll(const M_SV_S &, const std::string& savepath);
 
