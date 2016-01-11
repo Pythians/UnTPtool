@@ -15,28 +15,30 @@
 
 class SaveUi : public cocos2d::Node {
 private:
-    
+    // 菜单按钮 
     cocos2d::MenuItem * _item;
 
+    // 提示文本
     cocos2d::Label * _stat;
     cocos2d::Label * _plist;
     cocos2d::Label * _pic;
     cocos2d::Label * _num;
 
-    int _count;
-    bool _isLoad;
-    bool _isBegain;
+    int _count;     // 计数
+    bool _isLoad;   // plist 是否载入
+    bool _isBegain; // 是否开始
 
-    std::string _rootPath;
-    std::string _savePath;
-    M_SV_S _allFrames;
+    std::string _rootPath;  //根路径，读取 res，保存 savePic
+    std::string _savePath;  //临时保存路径
+    M_SV_S _allFrames;      //全部 frame
 public:
     bool init();
     bool init(const std::string& path);
     
-    void update(float delta);
+    void rInit();               //读取 plist 中的 frame
+    void update(float delta);   //保存图片
     void onEnter();
-        
+
     static SaveUi * create(const std::string&);
     CREATE_FUNC(SaveUi);
 };

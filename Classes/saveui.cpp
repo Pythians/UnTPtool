@@ -51,34 +51,43 @@ bool SaveUi::init()
     
     addChild(LayerColor::create(Color4B::GRAY));
     
-    _stat = Label::createWithTTF("seach over", "fonts/arial.ttf", 24);
+    // 初始化提示字体，使用默认字体
+    _stat = Label::create();
+    _stat->setString("DDDD");
+    _stat->setSystemFontSize(24);
+    _stat->setTextColor(Color4B::GREEN);
     _stat->setPosition(size.width / 2 , size.height * 3 / 4);
-    _stat->setColor(Color3B::GREEN);
     addChild(_stat);
     
-    _plist = Label::createWithTTF("A", "fonts/arial.ttf", 32);
+    _plist = Label::create();
+    _plist->setString("DDDD");
+    _plist->setSystemFontSize(32);
+    _plist->setTextColor(Color4B::ORANGE);
     _plist->setAnchorPoint(Vec2::ANCHOR_TOP_LEFT);
     _plist->setPosition(size.width / 5, size.height / 2);
-    _plist->setColor(Color3B::ORANGE);
     addChild(_plist);
     
-    _num = Label::createWithTTF("A", "fonts/arial.ttf", 32);
+    _num = Label::create();
+    _num->setString("DDDD");
+    _num->setSystemFontSize(32);
+    _num->setTextColor(Color4B::ORANGE);
     _num->setAnchorPoint(Vec2::ANCHOR_TOP_LEFT);
     _num->setPosition(size.width / 5, size.height / 2 - _plist->getContentSize().height);
-    _num->setColor(Color3B::ORANGE);
     addChild(_num);
     
     FileUtils::getInstance()->addSearchPath("res/");
-    auto file = FileUtils::getInstance()->fullPathForFilename("HelloWorld.png");
     
-    _rootPath = file.substr(0,file.find_last_of('/') + 1);
+    _rootPath = "";
     
+    // 开启 Update
     scheduleUpdate();
-    
+    // 创建控制按钮
     _item = MenuItemFont::create("Start");
     _item->setCallback([&](Ref* s){
-        _isBegain = !_isBegain;
+        rInit();
+        //设置按钮不可用，开始保存图片
         _item->setEnabled(false);
+        _isBegain = true;
     });
     _item->setPosition(size.width * 3 / 4, size.height / 2);
     _item->setColor(Color3B::MAGENTA);
@@ -95,6 +104,7 @@ void SaveUi::update(float delta)
 {
     if (_isBegain)
     {
+        // plist frame 为空更新状态，恢复按钮
         if (_allFrames.empty())
         {
             _stat->setString("Save All Done");
@@ -103,9 +113,11 @@ void SaveUi::update(float delta)
         }
         else
         {
+            // 获取第一个 plist
             auto p = _allFrames.begin();
             auto plist = p->first;
             auto& frame = p->second;
+            // 载入内存，载入过跳过
             if (!_isLoad)
             {
                 _isLoad = true;
@@ -117,16 +129,19 @@ void SaveUi::update(float delta)
             }
             if (frame.empty())
             {
+                // 图片为空，清除 SpriteFrameCache
                 SpriteFrameCache::getInstance()->removeSpriteFramesFromFile(plist);
-                _allFrames.erase(p);
-                _isLoad=false;
+                _allFrames.erase(p);    // 删除这个 plist
+                _isLoad=false;          // 清除载入状态
             }
             else
             {
-                auto pic = frame.at(frame.size()-1);
-                _stat->setString("Save pic: " + pic);
-                saveOne(pic, _savePath);
-                frame.pop_back();
+                // 取出最后 frame 名字
+                //auto pic = frame.at(frame.size()-1);
+                auto pic = frame.rbegin();
+                saveOne(pic->c_str(), _savePath);    //保存图片
+                _stat->setString(pic->insert(0, "Save pic: "));
+                frame.pop_back();          //删除最后 frame
             }
         }
     }
@@ -136,7 +151,14 @@ void SaveUi::update(float delta)
 void SaveUi::onEnter()
 {
     Node::onEnter();
+    rInit();
+}
+
+void SaveUi::rInit()
+{
+    // 获取文件
     auto files = getFiles(_rootPath + "res/","plist");
+    // 读取frame
     _allFrames = readFrameForPlist(files);
     _count = files.size();
     char buf[32];
@@ -144,4 +166,5 @@ void SaveUi::onEnter()
     _plist->setString(buf);
     sprintf(buf, "save %d plist", 0);
     _num->setString(buf);
+    _stat->setString("Seach Over");
 }
